@@ -5,9 +5,6 @@ import time
 import datetime
 import streamlit as st
 
-GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-
-
 # ── Optional imports ──
 try:
     from pypdf import PdfReader
@@ -63,7 +60,7 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════
-# CUSTOM CSS  (navy + gold aesthetic)
+# CUSTOM CSS
 # ══════════════════════════════════════════════
 st.markdown("""
 <style>
@@ -74,14 +71,10 @@ html, body, [class*="css"] {
     background-color: #080E1C;
     color: #F2EEE6;
 }
-
-/* Sidebar */
 section[data-testid="stSidebar"] {
     background: #0D1526 !important;
     border-right: 1px solid rgba(201,168,76,0.2);
 }
-
-/* Header banner */
 .nyaya-header {
     background: linear-gradient(135deg, #0D1526 0%, #080E1C 70%);
     border: 1px solid rgba(201,168,76,0.3);
@@ -100,10 +93,8 @@ section[data-testid="stSidebar"] {
     pointer-events: none;
 }
 .nyaya-header h1  { color: #C9A84C; font-size: 1.85rem; margin: 0 0 3px 0; font-family: 'EB Garamond', serif; }
-.nyaya-header .sub { color: rgba(201,168,76,0.7); font-family: 'EB Garamond', serif; font-style:italic; font-size:1rem; margin:0 0 4px; }
-.nyaya-header p   { color: #525060; margin: 0; font-size: 0.82rem; font-family: 'DM Mono', monospace; font-weight:300; }
-
-/* Chat bubbles */
+.nyaya-header .sub { color: rgba(201,168,76,0.7); font-style: italic; font-size: 1rem; margin: 0 0 4px; }
+.nyaya-header p   { color: #525060; margin: 0; font-size: 0.82rem; font-family: 'DM Mono', monospace; font-weight: 300; }
 .user-bubble {
     background: #111C33;
     border: 1px solid rgba(255,255,255,0.08);
@@ -125,26 +116,14 @@ section[data-testid="stSidebar"] {
     line-height: 1.8;
     font-size: 0.96rem;
 }
-.bubble-role {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 300;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    opacity: 0.55;
-}
+.bubble-role { font-family: 'DM Mono', monospace; font-size: 0.6rem; font-weight: 300; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 6px; opacity: 0.55; }
 .user-role  { color: #5A9FD4; }
 .ai-role    { color: #C9A84C; }
-.bubble-meta { font-family:'DM Mono',monospace; font-size:0.62rem; font-weight:300; color:#525060; margin-top:8px; display:flex; gap:12px; flex-wrap:wrap; }
-
-/* Status chips */
-.chip { display:inline-block; padding:3px 10px; border-radius:20px; font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:300; }
-.chip-ok  { background:#0d1f0f; border:1px solid #2a4d2e; color:#5AB87A; }
-.chip-err { background:#1f0d0d; border:1px solid #4d2a2a; color:#BF6B6B; }
-.chip-warn{ background:#1f180d; border:1px solid #4d3d1a; color:#C9A84C; }
-
-/* Doc preview */
+.bubble-meta { font-family: 'DM Mono', monospace; font-size: 0.62rem; font-weight: 300; color: #525060; margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+.chip      { display: inline-block; padding: 3px 10px; border-radius: 20px; font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 300; }
+.chip-ok   { background: #0d1f0f; border: 1px solid #2a4d2e; color: #5AB87A; }
+.chip-err  { background: #1f0d0d; border: 1px solid #4d2a2a; color: #BF6B6B; }
+.chip-warn { background: #1f180d; border: 1px solid #4d3d1a; color: #C9A84C; }
 .doc-preview {
     background: #111C33;
     border: 1px solid rgba(201,168,76,0.25);
@@ -158,79 +137,33 @@ section[data-testid="stSidebar"] {
     max-height: 480px;
     overflow-y: auto;
 }
-
-/* Reference table */
-.ref-section { margin-bottom: 1.8rem; }
-.ref-head {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 300;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: #9B7730;
-    border-bottom: 1px solid rgba(201,168,76,0.25);
-    padding-bottom: 5px;
-    margin-bottom: 8px;
-}
-.ref-row {
-    display:flex; gap:12px;
-    padding:6px 3px;
-    border-bottom:1px solid rgba(255,255,255,0.05);
-    font-size:0.88rem;
-}
-.ref-row:last-child { border-bottom:none; }
-.ref-code { min-width:195px; font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:300; color:#C9A84C; }
-.ref-desc { color:#A09880; }
-
-/* Metrics */
-.metric-card {
-    background: #111C33;
-    border: 1px solid rgba(201,168,76,0.15);
-    border-radius: 8px;
-    padding: 14px 18px;
-    text-align: center;
-}
-.metric-val { font-family:'EB Garamond',serif; font-size:1.9rem; color:#C9A84C; line-height:1; margin-bottom:4px; }
-.metric-lbl { font-family:'DM Mono',monospace; font-size:0.58rem; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#525060; }
-.log-row {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);
-    font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:300;
-}
-.log-row:last-child { border-bottom:none; }
-.log-time    { color:#525060; }
-.log-model   { color:#C9A84C; }
-.lat-good    { color:#5AB87A; font-weight:400; }
-.lat-ok      { color:#C9A84C; font-weight:400; }
-.lat-slow    { color:#BF6B6B; font-weight:400; }
-.perf-track  { background:#162040; border-radius:3px; height:4px; margin-top:5px; overflow:hidden; }
-.perf-fill   { height:100%; border-radius:3px; background:linear-gradient(90deg,#9B7730,#5AB87A); }
-
-/* Lawyer cards */
-.lawyer-card {
-    background:#111C33;
-    border:1px solid rgba(255,255,255,0.07);
-    border-radius:8px;
-    padding:14px 18px;
-    margin-bottom:10px;
-    transition: border-color 0.2s;
-}
-.lawyer-card:hover { border-color:rgba(201,168,76,0.3); }
-.lc-name  { font-size:0.97rem; font-weight:500; color:#F2EEE6; margin-bottom:1px; }
-.lc-role  { font-size:0.8rem; color:#A09880; font-style:italic; margin-bottom:5px; }
-.lc-tags  { display:flex; flex-wrap:wrap; gap:5px; }
-.lc-tag   { font-family:'DM Mono',monospace; font-size:0.57rem; font-weight:300; color:#9B7730; border:1px solid rgba(201,168,76,0.2); padding:1px 8px; border-radius:20px; }
-.lc-stat  { font-family:'EB Garamond',serif; font-size:1rem; color:#C9A84C; }
-.lc-sub   { font-family:'DM Mono',monospace; font-size:0.58rem; font-weight:300; color:#525060; }
-
-/* Misc */
-.divider-gold { border-color:rgba(201,168,76,0.15); margin:14px 0; }
-.section-lbl  { font-family:'DM Mono',monospace; font-size:0.58rem; font-weight:300; letter-spacing:0.18em; text-transform:uppercase; color:#525060; margin:16px 0 7px; }
-.stTextInput input, .stTextArea textarea, .stSelectbox select {
-    background: #111C33 !important;
-    color: #F2EEE6 !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 6px !important;
+.ref-row { display: flex; gap: 12px; padding: 6px 3px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.88rem; }
+.ref-row:last-child { border-bottom: none; }
+.ref-code { min-width: 195px; font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 300; color: #C9A84C; }
+.ref-desc { color: #A09880; }
+.metric-card { background: #111C33; border: 1px solid rgba(201,168,76,0.15); border-radius: 8px; padding: 14px 18px; text-align: center; }
+.metric-val  { font-family: 'EB Garamond', serif; font-size: 1.9rem; color: #C9A84C; line-height: 1; margin-bottom: 4px; }
+.metric-lbl  { font-family: 'DM Mono', monospace; font-size: 0.58rem; font-weight: 300; letter-spacing: 0.14em; text-transform: uppercase; color: #525060; }
+.log-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 300; }
+.log-row:last-child { border-bottom: none; }
+.log-time  { color: #525060; }
+.log-model { color: #C9A84C; }
+.lat-good  { color: #5AB87A; font-weight: 400; }
+.lat-ok    { color: #C9A84C; font-weight: 400; }
+.lat-slow  { color: #BF6B6B; font-weight: 400; }
+.perf-track { background: #162040; border-radius: 3px; height: 4px; margin-top: 5px; overflow: hidden; }
+.perf-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #9B7730, #5AB87A); }
+.lc-name { font-size: 0.97rem; font-weight: 500; color: #F2EEE6; margin-bottom: 1px; }
+.lc-role { font-size: 0.8rem; color: #A09880; font-style: italic; margin-bottom: 5px; }
+.lc-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.lc-tag  { font-family: 'DM Mono', monospace; font-size: 0.57rem; font-weight: 300; color: #9B7730; border: 1px solid rgba(201,168,76,0.2); padding: 1px 8px; border-radius: 20px; }
+.lc-stat { font-family: 'EB Garamond', serif; font-size: 1rem; color: #C9A84C; }
+.lc-sub  { font-family: 'DM Mono', monospace; font-size: 0.58rem; font-weight: 300; color: #525060; }
+.divider-gold { border-color: rgba(201,168,76,0.15); margin: 14px 0; }
+.section-lbl  { font-family: 'DM Mono', monospace; font-size: 0.58rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: #525060; margin: 16px 0 7px; }
+.stTextInput input, .stTextArea textarea {
+    background: #111C33 !important; color: #F2EEE6 !important;
+    border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 6px !important;
     font-family: 'EB Garamond', serif !important;
 }
 .stTextInput input:focus, .stTextArea textarea:focus {
@@ -239,27 +172,21 @@ section[data-testid="stSidebar"] {
 }
 .stButton > button {
     background: linear-gradient(135deg, #C9A84C, #9B7730) !important;
-    color: #080E1C !important;
-    border: none !important;
-    border-radius: 4px !important;
-    font-family: 'DM Mono', monospace !important;
-    font-size: 0.68rem !important;
-    font-weight: 400 !important;
-    letter-spacing: 0.1em !important;
-    text-transform: uppercase !important;
+    color: #080E1C !important; border: none !important; border-radius: 4px !important;
+    font-family: 'DM Mono', monospace !important; font-size: 0.68rem !important;
+    font-weight: 400 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important;
 }
 .stButton > button:hover { opacity: 0.88 !important; }
 .stDownloadButton > button {
-    background: transparent !important;
-    color: #A09880 !important;
+    background: transparent !important; color: #A09880 !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
-    font-family: 'DM Mono', monospace !important;
-    font-size: 0.66rem !important;
+    font-family: 'DM Mono', monospace !important; font-size: 0.66rem !important;
 }
-.stDownloadButton > button:hover { color:#C9A84C !important; border-color:rgba(201,168,76,0.4) !important; }
-.stTabs [data-baseweb="tab-list"] { background: #0D1526; border-bottom:1px solid rgba(201,168,76,0.15); }
-.stTabs [data-baseweb="tab"] { font-family:'DM Mono',monospace; font-size:0.68rem; font-weight:300; letter-spacing:0.1em; text-transform:uppercase; color:#525060; }
-.stTabs [aria-selected="true"] { color:#C9A84C !important; border-bottom:2px solid #C9A84C !important; }
+.stDownloadButton > button:hover { color: #C9A84C !important; border-color: rgba(201,168,76,0.4) !important; }
+.stTabs [data-baseweb="tab-list"] { background: #0D1526; border-bottom: 1px solid rgba(201,168,76,0.15); }
+.stTabs [data-baseweb="tab"] { font-family: 'DM Mono', monospace; font-size: 0.68rem; font-weight: 300; letter-spacing: 0.1em; text-transform: uppercase; color: #525060; }
+.stTabs [aria-selected="true"] { color: #C9A84C !important; border-bottom: 2px solid #C9A84C !important; }
+.stSelectbox > div > div { background: #111C33 !important; color: #F2EEE6 !important; border: 1px solid rgba(255,255,255,0.1) !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -272,10 +199,10 @@ CHUNK_SIZE       = 800
 CHUNK_OVERLAP    = 100
 
 GROQ_MODELS = {
-    "Llama 3.1 8B  —  Fastest":    "llama-3.1-8b-instant",
-    "Llama 3.3 70B  —  Smartest":  "llama-3.3-70b-versatile",
-    "Mixtral 8×7B  —  Balanced":   "mixtral-8x7b-32768",
-    "Gemma 2 9B":                  "gemma2-9b-it",
+    "Llama 3.1 8B  —  Fastest":   "llama-3.1-8b-instant",
+    "Llama 3.3 70B  —  Smartest": "llama-3.3-70b-versatile",
+    "Mixtral 8x7B  —  Balanced":  "mixtral-8x7b-32768",
+    "Gemma 2 9B":                 "gemma2-9b-it",
 }
 
 DOCUMENT_TEMPLATES = {
@@ -296,33 +223,25 @@ DOCUMENT_TEMPLATES = {
             "police_station":      "Police Station Name & District",
         },
         "textarea_fields": ["complainant_address","incident_description"],
-        "prompt": lambda fields, today: f"""Draft a formal FIR for Indian police, dated {today}.
-Include: station header, FIR number placeholder, complainant details, detailed incident narration, applicable IPC/BNS sections, prayer for action.
-Details:
-{fields}
-Write the complete FIR:""",
+        "prompt_template": "Draft a formal FIR for Indian police, dated {today}.\nInclude: station header, FIR number placeholder, complainant details, detailed incident narration, applicable IPC/BNS sections, prayer for action.\nDetails:\n{fields}\nWrite the complete FIR:",
     },
     "Legal Notice": {
         "icon": "📜", "desc": "Formal legal notice to another party",
         "fields": ["sender_name","sender_address","sender_advocate","recipient_name",
                    "recipient_address","notice_subject","facts","demand","reply_days"],
         "labels": {
-            "sender_name":      "Sender / Client Full Name",
-            "sender_address":   "Sender Address",
-            "sender_advocate":  "Advocate Name (optional)",
-            "recipient_name":   "Recipient / Opposite Party Name",
-            "recipient_address":"Recipient Address",
-            "notice_subject":   "Subject of Notice",
-            "facts":            "Facts & Circumstances",
-            "demand":           "Demand / Relief Sought",
-            "reply_days":       "Days to Reply (e.g. 15, 30)",
+            "sender_name":       "Sender / Client Full Name",
+            "sender_address":    "Sender Address",
+            "sender_advocate":   "Advocate Name (optional)",
+            "recipient_name":    "Recipient / Opposite Party Name",
+            "recipient_address": "Recipient Address",
+            "notice_subject":    "Subject of Notice",
+            "facts":             "Facts & Circumstances",
+            "demand":            "Demand / Relief Sought",
+            "reply_days":        "Days to Reply (e.g. 15, 30)",
         },
         "textarea_fields": ["sender_address","recipient_address","facts","demand"],
-        "prompt": lambda fields, today: f"""Draft a formal Legal Notice under Indian law, dated {today}.
-Include: LEGAL NOTICE heading, sender/advocate details, recipient details, numbered facts, legal grounds, specific demand with timeline, consequences of non-compliance.
-Details:
-{fields}
-Write the complete Legal Notice:""",
+        "prompt_template": "Draft a formal Legal Notice under Indian law, dated {today}.\nInclude: LEGAL NOTICE heading, sender/advocate details, recipient details, numbered facts, legal grounds, specific demand with timeline, consequences of non-compliance.\nDetails:\n{fields}\nWrite the complete Legal Notice:",
     },
     "Bail Application": {
         "icon": "🔓", "desc": "Application for regular or anticipatory bail",
@@ -340,32 +259,24 @@ Write the complete Legal Notice:""",
             "bail_grounds":      "Grounds for Bail",
         },
         "textarea_fields": ["applicant_address","bail_grounds"],
-        "prompt": lambda fields, today: f"""Draft a Bail Application under Section 437/439 CrPC (or BNSS equivalent) for an Indian court, dated {today}.
-Include: court heading, applicant details, FIR details, at least 5 specific grounds for bail, prayer clause.
-Details:
-{fields}
-Write the complete Bail Application:""",
+        "prompt_template": "Draft a Bail Application under Section 437/439 CrPC (or BNSS equivalent) for an Indian court, dated {today}.\nInclude: court heading, applicant details, FIR details, at least 5 specific grounds for bail, prayer clause.\nDetails:\n{fields}\nWrite the complete Bail Application:",
     },
     "Affidavit": {
         "icon": "📝", "desc": "General purpose sworn affidavit",
         "fields": ["deponent_name","deponent_age","deponent_address","deponent_occupation",
                    "affidavit_subject","statement_content","place","affidavit_date"],
         "labels": {
-            "deponent_name":      "Deponent Full Name",
-            "deponent_age":       "Age",
-            "deponent_address":   "Address",
-            "deponent_occupation":"Occupation",
-            "affidavit_subject":  "Subject / Purpose of Affidavit",
-            "statement_content":  "Content / Statements to Declare",
-            "place":              "Place of Execution",
-            "affidavit_date":     "Date",
+            "deponent_name":       "Deponent Full Name",
+            "deponent_age":        "Age",
+            "deponent_address":    "Address",
+            "deponent_occupation": "Occupation",
+            "affidavit_subject":   "Subject / Purpose of Affidavit",
+            "statement_content":   "Content / Statements to Declare",
+            "place":               "Place of Execution",
+            "affidavit_date":      "Date",
         },
         "textarea_fields": ["deponent_address","statement_content"],
-        "prompt": lambda fields, today: f"""Draft a formal Affidavit under Indian law, dated {today}.
-Include: heading, court/authority details, deponent details, numbered factual statements, solemn declaration, verification clause, signature block.
-Details:
-{fields}
-Write the complete Affidavit:""",
+        "prompt_template": "Draft a formal Affidavit under Indian law, dated {today}.\nInclude: heading, deponent details, numbered factual statements, solemn declaration, verification clause, signature block.\nDetails:\n{fields}\nWrite the complete Affidavit:",
     },
     "Rent Agreement": {
         "icon": "🏠", "desc": "Residential / commercial rent agreement draft",
@@ -373,23 +284,19 @@ Write the complete Affidavit:""",
                    "property_address","rent_amount","security_deposit",
                    "lease_start","lease_duration","special_terms"],
         "labels": {
-            "landlord_name":     "Landlord Full Name",
-            "landlord_address":  "Landlord Address",
-            "tenant_name":       "Tenant Full Name",
-            "tenant_address":    "Tenant Address",
-            "property_address":  "Property / Premises Address",
-            "rent_amount":       "Monthly Rent (₹)",
-            "security_deposit":  "Security Deposit (₹)",
-            "lease_start":       "Lease Start Date",
-            "lease_duration":    "Lease Duration (e.g. 11 months)",
-            "special_terms":     "Special Terms & Conditions (optional)",
+            "landlord_name":    "Landlord Full Name",
+            "landlord_address": "Landlord Address",
+            "tenant_name":      "Tenant Full Name",
+            "tenant_address":   "Tenant Address",
+            "property_address": "Property / Premises Address",
+            "rent_amount":      "Monthly Rent (₹)",
+            "security_deposit": "Security Deposit (₹)",
+            "lease_start":      "Lease Start Date",
+            "lease_duration":   "Lease Duration (e.g. 11 months)",
+            "special_terms":    "Special Terms & Conditions (optional)",
         },
         "textarea_fields": ["landlord_address","tenant_address","property_address","special_terms"],
-        "prompt": lambda fields, today: f"""Draft a comprehensive Rental Agreement under Indian law, dated {today}.
-Include: parties, property description, at least 10 detailed clauses covering rent, maintenance, termination, lock-in period, dispute resolution, signature block with witnesses.
-Details:
-{fields}
-Write the complete Rent Agreement:""",
+        "prompt_template": "Draft a comprehensive Rental Agreement under Indian law, dated {today}.\nInclude: parties, property description, at least 10 detailed clauses covering rent, maintenance, termination, lock-in, dispute resolution, signature block with witnesses.\nDetails:\n{fields}\nWrite the complete Rent Agreement:",
     },
     "Consumer Complaint": {
         "icon": "🛒", "desc": "Consumer forum complaint against seller/service",
@@ -397,63 +304,76 @@ Write the complete Rent Agreement:""",
                    "opposite_party_name","opposite_party_address","purchase_date",
                    "product_service","complaint_details","relief_sought","forum_name"],
         "labels": {
-            "complainant_name":      "Complainant Full Name",
-            "complainant_address":   "Complainant Address",
-            "complainant_phone":     "Phone Number",
-            "opposite_party_name":   "Opposite Party / Company Name",
-            "opposite_party_address":"Opposite Party Address",
-            "purchase_date":         "Date of Purchase / Service",
-            "product_service":       "Product / Service Name",
-            "complaint_details":     "Details of Complaint / Deficiency",
-            "relief_sought":         "Relief / Compensation Sought",
-            "forum_name":            "Consumer Forum Name & District",
+            "complainant_name":       "Complainant Full Name",
+            "complainant_address":    "Complainant Address",
+            "complainant_phone":      "Phone Number",
+            "opposite_party_name":    "Opposite Party / Company Name",
+            "opposite_party_address": "Opposite Party Address",
+            "purchase_date":          "Date of Purchase / Service",
+            "product_service":        "Product / Service Name",
+            "complaint_details":      "Details of Complaint / Deficiency",
+            "relief_sought":          "Relief / Compensation Sought",
+            "forum_name":             "Consumer Forum Name & District",
         },
         "textarea_fields": ["complainant_address","opposite_party_address","complaint_details","relief_sought"],
-        "prompt": lambda fields, today: f"""Draft a Consumer Complaint under the Consumer Protection Act 2019, dated {today}.
-Include: forum heading, complainant and opposite party details, jurisdiction, numbered statement of facts, legal grounds, specific relief sought, verification.
-Details:
-{fields}
-Write the complete Consumer Complaint:""",
+        "prompt_template": "Draft a Consumer Complaint under the Consumer Protection Act 2019, dated {today}.\nInclude: forum heading, complainant and opposite party details, jurisdiction, numbered statement of facts, legal grounds, specific relief sought, verification.\nDetails:\n{fields}\nWrite the complete Consumer Complaint:",
     },
 }
 
 LAWYERS = [
-    {"initials":"PS","name":"Adv. Priya Sharma",  "role":"Senior Advocate — Supreme Court of India","city":"Delhi",    "specs":["Criminal Law","Constitutional Law","Bail & Appeals"],    "fee":"₹5,000","rating":"4.9"},
-    {"initials":"RM","name":"Adv. Rajesh Menon",  "role":"High Court Advocate — Bombay High Court", "city":"Mumbai",   "specs":["Corporate Law","Contract Disputes","Cheque Bounce"],    "fee":"₹3,500","rating":"4.7"},
-    {"initials":"SR","name":"Adv. Sunita Rao",    "role":"Family Court Specialist — Karnataka HC",  "city":"Bangalore","specs":["Divorce","Child Custody","Domestic Violence"],           "fee":"₹2,500","rating":"4.8"},
-    {"initials":"VJ","name":"Adv. Vikram Joshi",  "role":"Revenue & Property — Pune District Court","city":"Pune",     "specs":["Property Law","Rent Disputes","Land Acquisition"],       "fee":"₹2,000","rating":"4.6"},
+    {"initials":"PS","name":"Adv. Priya Sharma",  "role":"Senior Advocate — Supreme Court of India","city":"Delhi",    "specs":["Criminal Law","Constitutional Law","Bail & Appeals"],     "fee":"₹5,000","rating":"4.9"},
+    {"initials":"RM","name":"Adv. Rajesh Menon",  "role":"High Court Advocate — Bombay High Court", "city":"Mumbai",   "specs":["Corporate Law","Contract Disputes","Cheque Bounce"],     "fee":"₹3,500","rating":"4.7"},
+    {"initials":"SR","name":"Adv. Sunita Rao",    "role":"Family Court Specialist — Karnataka HC",  "city":"Bangalore","specs":["Divorce","Child Custody","Domestic Violence"],            "fee":"₹2,500","rating":"4.8"},
+    {"initials":"VJ","name":"Adv. Vikram Joshi",  "role":"Revenue & Property — Pune District Court","city":"Pune",     "specs":["Property Law","Rent Disputes","Land Acquisition"],        "fee":"₹2,000","rating":"4.6"},
     {"initials":"FK","name":"Adv. Fatima Khan",   "role":"Labour & Employment — Telangana HC",      "city":"Hyderabad","specs":["Labour Law","Employment Disputes","Wrongful Termination"],"fee":"₹2,000","rating":"4.7"},
-    {"initials":"DN","name":"Adv. Deepak Nair",   "role":"Consumer & Civil — Madras High Court",    "city":"Chennai",  "specs":["Consumer Protection","Civil Suits","Medical Negligence"],"fee":"₹1,500","rating":"4.5"},
-    {"initials":"AG","name":"Adv. Ananya Gupta",  "role":"Tax & Regulatory — Calcutta High Court",  "city":"Kolkata",  "specs":["Income Tax","GST","Customs & Excise"],                   "fee":"₹4,000","rating":"4.8"},
-    {"initials":"AS","name":"Adv. Arjun Singh",   "role":"Criminal Defence — Allahabad High Court", "city":"Lucknow",  "specs":["Criminal Defence","NDPS","POCSO"],                       "fee":"₹2,500","rating":"4.6"},
-    {"initials":"MP","name":"Adv. Meera Pillai",  "role":"Cyber Law & IPR — Karnataka HC",          "city":"Bangalore","specs":["Cyber Crime","Intellectual Property","Data Privacy"],    "fee":"₹3,000","rating":"4.9"},
-    {"initials":"HB","name":"Adv. Harish Bhatia", "role":"RTI & Administrative Law — Rajasthan HC", "city":"Jaipur",   "specs":["RTI","PILs","Administrative Law"],                       "fee":"₹1,500","rating":"4.4"},
+    {"initials":"DN","name":"Adv. Deepak Nair",   "role":"Consumer & Civil — Madras High Court",    "city":"Chennai",  "specs":["Consumer Protection","Civil Suits","Medical Negligence"], "fee":"₹1,500","rating":"4.5"},
+    {"initials":"AG","name":"Adv. Ananya Gupta",  "role":"Tax & Regulatory — Calcutta High Court",  "city":"Kolkata",  "specs":["Income Tax","GST","Customs & Excise"],                    "fee":"₹4,000","rating":"4.8"},
+    {"initials":"AS","name":"Adv. Arjun Singh",   "role":"Criminal Defence — Allahabad High Court", "city":"Lucknow",  "specs":["Criminal Defence","NDPS","POCSO"],                        "fee":"₹2,500","rating":"4.6"},
+    {"initials":"MP","name":"Adv. Meera Pillai",  "role":"Cyber Law & IPR — Karnataka HC",          "city":"Bangalore","specs":["Cyber Crime","Intellectual Property","Data Privacy"],     "fee":"₹3,000","rating":"4.9"},
+    {"initials":"HB","name":"Adv. Harish Bhatia", "role":"RTI & Administrative Law — Rajasthan HC", "city":"Jaipur",   "specs":["RTI","PILs","Administrative Law"],                        "fee":"₹1,500","rating":"4.4"},
 ]
 
 # ══════════════════════════════════════════════
 # SESSION STATE
 # ══════════════════════════════════════════════
 _defaults = {
-    "chat_history":       [],
-    "vectorstore":        None,
-    "active_tab":         "chat",
-    "selected_doc":       None,
-    "doc_form_data":      {},
-    "generated_doc_text": "",
-    "generated_doc_bytes":None,
+    "chat_history":        [],
+    "vectorstore":         None,
+    "selected_doc":        None,
+    "generated_doc_text":  "",
+    "generated_doc_bytes": None,
     "metrics": {
-        "total_queries":        0,
-        "total_doc_generations":0,
-        "total_tokens_est":     0,
-        "query_log":            [],
-        "llm_times":            [],
-        "retrieval_times":      [],
-        "model_usage":          {},
+        "total_queries":         0,
+        "total_doc_generations": 0,
+        "total_tokens_est":      0,
+        "query_log":             [],
+        "llm_times":             [],
+        "retrieval_times":       [],
+        "model_usage":           {},
     },
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ══════════════════════════════════════════════════════════════
+# API KEY — reads from Streamlit Secrets ONLY, never from UI
+# ══════════════════════════════════════════════════════════════
+def get_api_key() -> str:
+    """
+    Reads GROQ_API_KEY exclusively from Streamlit Secrets (st.secrets).
+
+    Local dev  → create  .streamlit/secrets.toml  and add:
+                     GROQ_API_KEY = "gsk_..."
+
+    Cloud deploy → Streamlit Cloud ▸ App settings ▸ Secrets ▸ paste same line.
+
+    The key is NEVER shown or entered in the app UI.
+    """
+    try:
+        return st.secrets["GROQ_API_KEY"]
+    except (KeyError, FileNotFoundError):
+        return ""
 
 # ══════════════════════════════════════════════
 # HELPERS
@@ -461,12 +381,8 @@ for k, v in _defaults.items():
 def avg(lst):
     return round(sum(lst) / len(lst)) if lst else 0
 
-def estimate_tokens(text):
+def estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
-
-def get_api_key():
-    """Reads GROQ_API_KEY from .env / environment only — never from UI."""
-    return os.getenv("GROQ_API_KEY", "").strip()
 
 def log_query(qtype, model, ret_ms, llm_ms, tokens):
     m = st.session_state.metrics
@@ -500,10 +416,10 @@ def load_embeddings():
         encode_kwargs={"batch_size": 32, "normalize_embeddings": True},
     )
 
-def load_llm(model_id):
+def load_llm(model_id: str):
     api_key = get_api_key()
     if not GROQ_AVAILABLE:
-        st.error("langchain-groq is not installed. Run: pip install langchain-groq")
+        st.error("langchain-groq not installed. Add it to requirements.txt")
         return None
     return ChatGroq(
         model=model_id,
@@ -515,13 +431,13 @@ def load_llm(model_id):
 
 def build_vectorstore(files, embeddings):
     if not PDF_AVAILABLE or not LANGCHAIN_AVAILABLE:
-        st.error("Install pypdf and langchain: pip install pypdf langchain-text-splitters")
+        st.error("Install pypdf and langchain-text-splitters")
         return None
     docs = []
     for uf in files:
         try:
             reader = PdfReader(uf)
-            text = "".join(p.extract_text() or "" for p in reader.pages)
+            text   = "".join(p.extract_text() or "" for p in reader.pages)
             if text.strip():
                 docs.append(Document(page_content=text, metadata={"source": uf.name}))
         except Exception as e:
@@ -543,13 +459,13 @@ def load_saved_vs(embeddings):
         allow_dangerous_deserialization=True,
     )
 
-def chat_prompt(question, context, history):
+def chat_prompt(question: str, context: str, history: list) -> str:
     hist_txt = ""
     for t in history[-4:]:
         c = t["content"][:500] + "…" if len(t["content"]) > 500 else t["content"]
         hist_txt += f"{'User' if t['role'] == 'user' else 'Assistant'}: {c}\n"
     ctx = context[:2000] + "…" if len(context) > 2000 else context
-    return f"""You are Indian Lawyer – Satyameva Jayate, a senior Indian legal expert.
+    return f"""You are Indian Lawyer – Satyameva Jayate, a senior Indian legal expert with deep knowledge of IPC, BNS, CrPC, BNSS, the Constitution, and all major Indian statutes.
 
 Reply using EXACTLY this structure:
 
@@ -563,9 +479,9 @@ Reply using EXACTLY this structure:
 [1–2 landmark Supreme Court or High Court cases if applicable]
 
 ### 💡 Practical Next Steps
-[Concrete, actionable steps]
+[Concrete, actionable steps the person should take]
 
-History:
+Conversation history:
 {hist_txt}
 
 Context from uploaded documents:
@@ -574,26 +490,22 @@ Context from uploaded documents:
 Question: {question}
 Answer:"""
 
-def build_doc_prompt(doc_type, fields):
+def build_doc_prompt(doc_type: str, fields: dict) -> str:
     today  = datetime.date.today().strftime("%d %B %Y")
     meta   = DOCUMENT_TEMPLATES[doc_type]
     fs_str = "\n".join(f"- {k.replace('_',' ').title()}: {v}" for k, v in fields.items() if v)
-    return meta["prompt"](fs_str, today)
+    return meta["prompt_template"].format(today=today, fields=fs_str)
 
-def create_docx(title, content):
+def create_docx(title: str, content: str) -> bytes:
     doc = DocxDocument()
     s = doc.sections[0]
-    s.top_margin    = Inches(1)
-    s.bottom_margin = Inches(1)
-    s.left_margin   = Inches(1.25)
-    s.right_margin  = Inches(1.25)
-
+    s.top_margin = Inches(1); s.bottom_margin = Inches(1)
+    s.left_margin = Inches(1.25); s.right_margin = Inches(1.25)
     tp = doc.add_paragraph()
     tp.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = tp.add_run(title.upper())
     r.bold = True; r.font.size = Pt(13); r.font.color.rgb = RGBColor(0x1a, 0x1a, 0x5e)
     doc.add_paragraph()
-
     for line in content.split("\n"):
         line = line.strip()
         if not line:
@@ -615,37 +527,57 @@ def create_docx(title, content):
         else:
             r = para.add_run(clean); r.font.size = Pt(11)
         para.paragraph_format.space_after = Pt(2)
+    buf = io.BytesIO(); doc.save(buf); return buf.getvalue()
 
-    buf = io.BytesIO()
-    doc.save(buf)
-    return buf.getvalue()
+# ══════════════════════════════════════════════
+# VALIDATE SECRET — halt early with clear guidance
+# ══════════════════════════════════════════════
+api_key = get_api_key()
+key_ok  = bool(api_key)
 
 # ══════════════════════════════════════════════
 # HEADER
 # ══════════════════════════════════════════════
-api_key = get_api_key()
-key_status_html = (
-    '<span class="chip chip-ok">● API key loaded from .env</span>'
-    if api_key else
-    '<span class="chip chip-err">● GROQ_API_KEY not found in .env</span>'
+key_chip = (
+    '<span class="chip chip-ok">● GROQ_API_KEY loaded from Streamlit Secrets</span>'
+    if key_ok else
+    '<span class="chip chip-err">● GROQ_API_KEY not found in Streamlit Secrets</span>'
 )
-
 st.markdown(f"""
 <div class="nyaya-header">
   <h1>Indian Lawyer ⚖️</h1>
   <div class="sub">Satyameva Jayate — सत्यमेव जयते</div>
   <p>AI-powered Indian Legal Assistant · Chat · Document Generator · RAG · Metrics · Powered by Groq</p>
-  <div style="margin-top:10px">{key_status_html}</div>
+  <div style="margin-top:10px">{key_chip}</div>
 </div>
 """, unsafe_allow_html=True)
 
-if not api_key:
-    st.error(
-        "**GROQ_API_KEY not found.** "
-        "Create a `.env` file in this directory and add:\n\n"
-        "```\nGROQ_API_KEY=gsk_your_key_here\n```\n\n"
-        "Get a free key at [console.groq.com](https://console.groq.com)"
-    )
+if not key_ok:
+    st.error("**GROQ_API_KEY not found in Streamlit Secrets.**")
+    st.markdown("""
+### How to fix
+
+**Running locally** — create `.streamlit/secrets.toml` in your project root:
+```toml
+GROQ_API_KEY = "gsk_your_key_here"
+```
+Then run `streamlit run app.py`.
+
+---
+
+**Deployed on Streamlit Cloud** — add the secret in the dashboard:
+1. Go to [share.streamlit.io](https://share.streamlit.io) → your app
+2. Click **⋮ → Settings → Secrets**
+3. Paste the line below and click **Save**:
+```toml
+GROQ_API_KEY = "gsk_your_key_here"
+```
+The app will restart automatically with the secret loaded.
+
+---
+
+Get a **free** Groq API key at [console.groq.com](https://console.groq.com)
+""")
     st.stop()
 
 # ══════════════════════════════════════════════
@@ -674,7 +606,7 @@ with st.sidebar:
         uploaded = st.file_uploader("", type="pdf", accept_multiple_files=True, label_visibility="collapsed")
         if st.button("⚡ Build Index", use_container_width=True):
             if not uploaded:
-                st.error("Upload at least one PDF.")
+                st.error("Upload at least one PDF first.")
             else:
                 with st.spinner("Indexing PDFs…"):
                     t0  = time.time()
@@ -701,13 +633,13 @@ with st.sidebar:
                     st.error("No saved index found. Upload PDFs first.")
 
     st.markdown('<hr class="divider-gold">', unsafe_allow_html=True)
-    kb_ok  = st.session_state.vectorstore is not None
-    kb_tag = '<span class="chip chip-ok">● Ready</span>' if kb_ok else '<span class="chip chip-warn">● Not loaded</span>'
+    kb_ok_state = st.session_state.vectorstore is not None
+    kb_tag = '<span class="chip chip-ok">● Ready</span>' if kb_ok_state else '<span class="chip chip-warn">● Not loaded</span>'
     m      = st.session_state.metrics
     avg_ms = avg(m["llm_times"])
     lc     = "#5AB87A" if avg_ms < 3000 else "#C9A84C" if avg_ms < 8000 else "#BF6B6B"
     st.markdown(f"""
-    <div style='font-family:"DM Mono",monospace;font-size:0.65rem;font-weight:300;line-height:2;color:#525060'>
+    <div style='font-family:"DM Mono",monospace;font-size:0.65rem;font-weight:300;line-height:2.1;color:#525060'>
       KB: {kb_tag}<br>
       Model: <span style='color:#C9A84C'>{model_label.split('—')[0].strip()}</span><br>
       Queries: <span style='color:#F2EEE6'>{m["total_queries"]}</span><br>
@@ -716,7 +648,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown('<hr class="divider-gold">', unsafe_allow_html=True)
-    st.caption("Powered by Groq · Key from .env")
+    st.caption("Key via st.secrets · Powered by Groq")
 
 # ══════════════════════════════════════════════
 # TABS
@@ -730,7 +662,7 @@ tab_chat, tab_docs, tab_lawyers, tab_ref, tab_metrics = st.tabs([
 ])
 
 # ════════════════════════════════════════════════════
-# TAB 1 — CHAT
+# TAB 1 — LEGAL CHAT
 # ════════════════════════════════════════════════════
 with tab_chat:
     if not st.session_state.chat_history:
@@ -745,7 +677,8 @@ with tab_chat:
         for turn in st.session_state.chat_history:
             if turn["role"] == "user":
                 st.markdown(
-                    f'<div class="user-bubble"><div class="bubble-role user-role">You</div>{turn["content"]}</div>',
+                    f'<div class="user-bubble"><div class="bubble-role user-role">You</div>'
+                    f'{turn["content"]}</div>',
                     unsafe_allow_html=True,
                 )
             else:
@@ -754,7 +687,11 @@ with tab_chat:
                 meta_html = ""
                 if meta:
                     ret = f'<span>🔍 {meta["retrieval_ms"]}ms</span>' if meta.get("retrieval_ms") else ""
-                    meta_html = f'<div class="bubble-meta"><span>⚡ {meta["llm_ms"]/1000:.1f}s</span>{ret}<span>~{meta["tokens"]} tokens</span></div>'
+                    meta_html = (
+                        f'<div class="bubble-meta">'
+                        f'<span>⚡ {meta["llm_ms"]/1000:.1f}s</span>{ret}'
+                        f'<span>~{meta["tokens"]} tokens</span></div>'
+                    )
                 srcs = "".join(
                     f'<span style="font-family:\'DM Mono\',monospace;font-size:0.65rem;font-weight:300;'
                     f'color:#5AB87A;border:1px solid rgba(91,184,122,0.25);padding:1px 8px;'
@@ -777,7 +714,7 @@ with tab_chat:
     c1, c2, c3 = st.columns([3, 1, 1])
     with c1: ask    = st.button("⚖️ Ask Satyameva Jayate", use_container_width=True)
     with c2: clear  = st.button("🗑 Clear", use_container_width=True)
-    with c3: export = st.button("📥 Export chat", use_container_width=True)
+    with c3: export = st.button("📥 Export", use_container_width=True)
 
     if clear:
         st.session_state.chat_history = []
@@ -800,14 +737,14 @@ with tab_chat:
     if ask and question.strip():
         st.session_state.chat_history.append({"role": "user", "content": question.strip()})
 
-        sources        = []
-        retrieval_ms   = 0
-        context        = "No document context loaded. Answer from general Indian legal knowledge."
+        sources      = []
+        retrieval_ms = 0
+        context      = "No document context loaded. Answer from general Indian legal knowledge."
 
         if st.session_state.vectorstore:
             with st.spinner("🔍 Searching legal documents…"):
-                t_ret  = time.time()
-                docs   = st.session_state.vectorstore.as_retriever(
+                t_ret = time.time()
+                docs  = st.session_state.vectorstore.as_retriever(
                     search_kwargs={"k": top_k}
                 ).invoke(question.strip())
                 retrieval_ms = round((time.time() - t_ret) * 1000)
@@ -821,9 +758,9 @@ with tab_chat:
         if llm is None:
             st.stop()
 
-        resp_area  = st.empty()
-        full_resp  = ""
-        t_llm      = time.time()
+        resp_area = st.empty()
+        full_resp = ""
+        t_llm     = time.time()
 
         with st.spinner("⚖️ Consulting…"):
             for chunk in llm.stream(prompt):
@@ -853,17 +790,17 @@ with tab_docs:
         for i, (doc_type, meta) in enumerate(DOCUMENT_TEMPLATES.items()):
             with cols[i % 3]:
                 st.markdown(
-                    f'<div style="background:#111C33;border:1px solid rgba(201,168,76,0.15);border-radius:8px;'
-                    f'padding:14px 16px;margin-bottom:6px"><div style="font-family:\'EB Garamond\',serif;'
-                    f'font-size:1rem;color:#C9A84C;margin-bottom:3px">{meta["icon"]} {doc_type}</div>'
+                    f'<div style="background:#111C33;border:1px solid rgba(201,168,76,0.15);'
+                    f'border-radius:8px;padding:14px 16px;margin-bottom:6px">'
+                    f'<div style="font-family:\'EB Garamond\',serif;font-size:1rem;color:#C9A84C;'
+                    f'margin-bottom:3px">{meta["icon"]} {doc_type}</div>'
                     f'<div style="font-size:0.78rem;color:#525060;font-style:italic">{meta["desc"]}</div></div>',
                     unsafe_allow_html=True,
                 )
                 if st.button("Select", key=f"sel_{doc_type}", use_container_width=True):
-                    st.session_state.selected_doc       = doc_type
-                    st.session_state.doc_form_data      = {}
-                    st.session_state.generated_doc_text = ""
-                    st.session_state.generated_doc_bytes= None
+                    st.session_state.selected_doc        = doc_type
+                    st.session_state.generated_doc_text  = ""
+                    st.session_state.generated_doc_bytes = None
                     st.rerun()
     else:
         doc_type = st.session_state.selected_doc
@@ -878,7 +815,7 @@ with tab_docs:
             st.markdown(f"### {meta['icon']} {doc_type}")
 
         st.markdown("---")
-        left, right = st.columns([1, 1])
+        left, right = st.columns(2)
 
         with left:
             st.markdown("**Fill in the details**")
@@ -958,23 +895,21 @@ with tab_docs:
 # ════════════════════════════════════════════════════
 with tab_lawyers:
     st.markdown("### 👨‍⚖️ Advocates Across India")
-    filter_q = st.text_input(
-        "Search",
-        placeholder="Filter by city, specialisation, or keyword…",
-        label_visibility="collapsed",
-    )
+    filter_q = st.text_input("Search", placeholder="Filter by city, specialisation, or keyword…", label_visibility="collapsed")
     q = filter_q.lower()
     filtered = [
         l for l in LAWYERS
-        if not q or q in l["name"].lower() or q in l["city"].lower()
-        or any(q in s.lower() for s in l["specs"]) or q in l["role"].lower()
-    ] if q else LAWYERS
-
+        if not q
+        or q in l["name"].lower()
+        or q in l["city"].lower()
+        or any(q in s.lower() for s in l["specs"])
+        or q in l["role"].lower()
+    ]
     for l in filtered:
         tags_html = "".join(f'<span class="lc-tag">{s}</span>' for s in l["specs"])
         tags_html += f'<span class="lc-tag">{l["city"]}</span>'
-        cols = st.columns([0.55, 5, 1.2])
-        with cols[0]:
+        c1, c2, c3 = st.columns([0.55, 5, 1.2])
+        with c1:
             st.markdown(
                 f'<div style="width:40px;height:40px;border-radius:50%;background:#162040;'
                 f'border:1px solid rgba(201,168,76,0.25);display:flex;align-items:center;'
@@ -982,17 +917,16 @@ with tab_lawyers:
                 f'color:#C9A84C;margin-top:4px">{l["initials"]}</div>',
                 unsafe_allow_html=True,
             )
-        with cols[1]:
+        with c2:
             st.markdown(
                 f'<div class="lc-name">{l["name"]}</div>'
                 f'<div class="lc-role">{l["role"]}</div>'
                 f'<div class="lc-tags">{tags_html}</div>',
                 unsafe_allow_html=True,
             )
-        with cols[2]:
+        with c3:
             st.markdown(
-                f'<div class="lc-stat">{l["rating"]} ★</div>'
-                f'<div class="lc-sub">rating</div>'
+                f'<div class="lc-stat">{l["rating"]} ★</div><div class="lc-sub">rating</div>'
                 f'<div class="lc-stat" style="font-size:.85rem;margin-top:4px">{l["fee"]}</div>'
                 f'<div class="lc-sub">consult</div>',
                 unsafe_allow_html=True,
@@ -1004,7 +938,6 @@ with tab_lawyers:
 # ════════════════════════════════════════════════════
 with tab_ref:
     st.markdown("### 📌 Quick IPC / Legal Reference")
-
     ref_data = {
         "🔴 IPC — Offences Against Person": [
             ("IPC 299 / BNS 100","Culpable Homicide"),
@@ -1048,7 +981,6 @@ with tab_ref:
             ("30 Days","Motor accident claim (condonable)"),
         ],
     }
-
     for cat, items in ref_data.items():
         with st.expander(cat, expanded=False):
             rows = "".join(
@@ -1057,11 +989,10 @@ with tab_ref:
                 for sec, desc in items
             )
             st.markdown(f'<div>{rows}</div>', unsafe_allow_html=True)
-
     st.markdown(
         '<div style="color:#525060;font-family:\'DM Mono\',monospace;font-size:0.72rem;'
-        'font-weight:300;text-align:center;padding:14px 0">⚠ AI-generated reference for informational '
-        'purposes only. Always consult a qualified advocate.</div>',
+        'font-weight:300;text-align:center;padding:14px 0">⚠ For informational purposes only. '
+        'Always consult a qualified advocate.</div>',
         unsafe_allow_html=True,
     )
 
@@ -1073,14 +1004,15 @@ with tab_metrics:
     st.markdown("### 📊 Session Performance Metrics")
 
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    for col, val, lbl in [
-        (c1, m["total_queries"],               "Total Queries"),
-        (c2, f"{avg(m['llm_times'])/1000:.1f}s" if m["llm_times"] else "—", "Avg LLM"),
-        (c3, f"{avg(m['retrieval_times'])}ms"  if m["retrieval_times"] else "—", "Avg Retrieval"),
-        (c4, f"{avg([e['total_ms'] for e in m['query_log']])/1000:.1f}s" if m["query_log"] else "—", "Avg Total"),
-        (c5, f"{m['total_tokens_est']:,}",     "~Tokens"),
-        (c6, m["total_doc_generations"],       "Docs Generated"),
-    ]:
+    stat_items = [
+        (c1, m["total_queries"],                                                                       "Total Queries"),
+        (c2, f"{avg(m['llm_times'])/1000:.1f}s"                   if m["llm_times"]   else "—",       "Avg LLM"),
+        (c3, f"{avg(m['retrieval_times'])}ms"                      if m["retrieval_times"] else "—",   "Avg Retrieval"),
+        (c4, f"{avg([e['total_ms'] for e in m['query_log']])/1000:.1f}s" if m["query_log"] else "—",  "Avg Total"),
+        (c5, f"{m['total_tokens_est']:,}",                                                             "~Tokens"),
+        (c6, m["total_doc_generations"],                                                               "Docs Generated"),
+    ]
+    for col, val, lbl in stat_items:
         col.markdown(
             f'<div class="metric-card"><div class="metric-val">{val}</div>'
             f'<div class="metric-lbl">{lbl}</div></div>',
@@ -1099,7 +1031,6 @@ with tab_metrics:
         """, unsafe_allow_html=True)
     else:
         ca, cb = st.columns(2)
-
         with ca:
             st.markdown(
                 '<div style="background:#111C33;border:1px solid rgba(201,168,76,0.12);'
@@ -1112,11 +1043,10 @@ with tab_metrics:
                 s   = entry["total_ms"] / 1000
                 cls = "lat-good" if s < 3 else "lat-ok" if s < 8 else "lat-slow"
                 ret = f' · 🔍 {entry["retrieval_ms"]}ms' if entry["retrieval_ms"] else ""
-                short_model = entry["model"][:22]
                 st.markdown(
                     f'<div class="log-row">'
                     f'<span><span class="log-time">{entry["time"]}</span> &nbsp;'
-                    f'<span class="log-model">{short_model}</span> &nbsp;'
+                    f'<span class="log-model">{entry["model"][:22]}</span> &nbsp;'
                     f'<span style="color:#525060;font-size:0.65rem">[{entry["type"]}]</span></span>'
                     f'<span class="{cls}">⚡ {s:.1f}s{ret}</span></div>',
                     unsafe_allow_html=True,
@@ -1137,12 +1067,9 @@ with tab_metrics:
                 st.markdown(
                     f'<div style="margin-bottom:11px">'
                     f'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
-                    f'<span style="font-family:\'DM Mono\',monospace;font-size:0.65rem;font-weight:300;'
-                    f'color:#C9A84C">{mdl[:32]}</span>'
-                    f'<span style="font-family:\'DM Mono\',monospace;font-size:0.63rem;font-weight:300;'
-                    f'color:#F2EEE6">{cnt} ({pct}%)</span></div>'
-                    f'<div class="perf-track"><div class="perf-fill" style="width:{pct}%"></div></div>'
-                    f'</div>',
+                    f'<span style="font-family:\'DM Mono\',monospace;font-size:0.65rem;font-weight:300;color:#C9A84C">{mdl[:32]}</span>'
+                    f'<span style="font-family:\'DM Mono\',monospace;font-size:0.63rem;font-weight:300;color:#F2EEE6">{cnt} ({pct}%)</span></div>'
+                    f'<div class="perf-track"><div class="perf-fill" style="width:{pct}%"></div></div></div>',
                     unsafe_allow_html=True,
                 )
             st.markdown('</div>', unsafe_allow_html=True)
