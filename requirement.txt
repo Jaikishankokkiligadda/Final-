@@ -1,5 +1,5 @@
 streamlit>=1.35.0
-python-dotenv>=1.0.0
+secrets.toml
 langchain-groq>=0.1.6
 langchain-core>=0.2.0
 langchain-text-splitters>=0.2.0
