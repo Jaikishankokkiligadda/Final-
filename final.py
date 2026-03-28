@@ -6,8 +6,6 @@ import datetime
 import streamlit as st
 from dotenv import load_dotenv
 
-# ── Load .env ──
-load_dotenv()
 
 # ── Optional imports ──
 try:
