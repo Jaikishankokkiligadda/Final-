@@ -4,7 +4,8 @@ import re
 import time
 import datetime
 import streamlit as st
-from dotenv import load_dotenv
+
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
 
 # ── Optional imports ──
