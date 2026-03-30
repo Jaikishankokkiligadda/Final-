@@ -5,6 +5,7 @@ import time
 import datetime
 import streamlit as st
 
+
 # ── Optional imports ──
 try:
     from pypdf import PdfReader
@@ -676,7 +677,11 @@ def estimate_tokens(text):
     return max(1, len(text) // 4)
 
 def get_api_key():
-    return os.getenv("GROQ_API_KEY", "").strip()
+    """Read GROQ_API_KEY from Streamlit secrets (Streamlit Cloud)."""
+    try:
+        return st.secrets["GROQ_API_KEY"].strip()
+    except Exception:
+        return ""
 
 def log_query(qtype, model, ret_ms, llm_ms, tokens):
     m = st.session_state.metrics
@@ -711,16 +716,13 @@ def load_embeddings():
     )
 
 def load_llm(model_id):
-    if not GROQ_AVAILABLE:
-        st.warning(
-            "**langchain-groq not installed.** "
-            "Run: `pip install langchain-groq` then restart the app.\n\n"
-            "Add to `requirements.txt`:\n```\nlangchain-groq\n```"
-        )
-        return None
     api_key = get_api_key()
     if not api_key:
-        st.warning("GROQ_API_KEY not set. Add it to your `.env` file.")
+        st.error(
+            "**GROQ_API_KEY not found.**  \n"
+            "Go to your Streamlit Cloud app → **Settings → Secrets** and add:\n"
+            "```toml\nGROQ_API_KEY = \"gsk_your_key_here\"\n```"
+        )
         return None
     return ChatGroq(
         model=model_id,
@@ -841,14 +843,12 @@ def create_docx(title, content):
 # WORDMARK BANNER
 # ══════════════════════════════════════════════
 api_key = get_api_key()
-groq_installed = GROQ_AVAILABLE
 
-if groq_installed and api_key:
-    key_chip = '<span class="chip chip-ok">● Groq ready</span>'
-elif groq_installed and not api_key:
-    key_chip = '<span class="chip chip-warn">● GROQ_API_KEY missing</span>'
-else:
-    key_chip = '<span class="chip chip-err">● langchain-groq not installed</span>'
+key_chip = (
+    '<span class="chip chip-ok">● Groq ready</span>'
+    if api_key else
+    '<span class="chip chip-err">● GROQ_API_KEY missing — add to Streamlit Secrets</span>'
+)
 
 st.markdown(f"""
 <div class="wm-banner">
@@ -859,20 +859,6 @@ st.markdown(f"""
   <span style="margin-left:1rem">{key_chip}</span>
 </div>
 """, unsafe_allow_html=True)
-
-# ── Setup warnings (non-blocking) ──
-if not GROQ_AVAILABLE:
-    st.warning(
-        "**`langchain-groq` is not installed.** The chat and doc generator require it.\n\n"
-        "Fix: add `langchain-groq` to your `requirements.txt` and run `pip install langchain-groq`."
-    )
-
-if GROQ_AVAILABLE and not api_key:
-    st.warning(
-        "**GROQ_API_KEY not found.** Create a `.env` file with:\n"
-        "```\nGROQ_API_KEY=gsk_your_key_here\n```\n"
-        "Get a free key at [console.groq.com](https://console.groq.com)"
-    )
 
 # ══════════════════════════════════════════════
 # SIDEBAR
