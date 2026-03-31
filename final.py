@@ -41,6 +41,7 @@ try:
     GROQ_AVAILABLE = True
 except ImportError:
     GROQ_AVAILABLE = False
+    ChatGroq = None
 
 try:
     from docx import Document as DocxDocument
@@ -61,14 +62,12 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════
-# CUSTOM CSS  — mirrors the HTML reference UI
-# Navy + gold legal aesthetic with EB Garamond / DM Mono
+# CUSTOM CSS
 # ══════════════════════════════════════════════
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@300;400&display=swap');
 
-/* ─── CSS Variables ─── */
 :root {
   --gold:          #C9A84C;
   --gold-bright:   #E2C06A;
@@ -89,7 +88,6 @@ st.markdown("""
   --mono:  'DM Mono', monospace;
 }
 
-/* ─── Base ─── */
 html, body, [class*="css"], .stApp {
   font-family: var(--serif) !important;
   background-color: var(--navy) !important;
@@ -98,14 +96,12 @@ html, body, [class*="css"], .stApp {
 }
 .block-container { padding: 2rem 2.4rem 3rem !important; max-width: 100% !important; }
 
-/* ─── Sidebar ─── */
 section[data-testid="stSidebar"] {
   background: var(--navy-mid) !important;
   border-right: 1px solid var(--gold-rule-hi) !important;
 }
 section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
 
-/* ─── Wordmark / Header banner ─── */
 .wm-banner {
   display: flex;
   align-items: center;
@@ -122,22 +118,11 @@ section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
   display: flex; align-items: center; justify-content: center;
   font-size: 1rem; color: var(--gold); flex-shrink: 0;
 }
-.wm-title {
-  font-family: var(--serif);
-  font-size: 1.3rem;
-  color: var(--text-bright);
-  letter-spacing: 0.04em;
-}
+.wm-title { font-family: var(--serif); font-size: 1.3rem; color: var(--text-bright); letter-spacing: 0.04em; }
 .wm-title em { font-style: italic; color: var(--gold); }
 .wm-rule { flex: 1; height: 1px; background: var(--gold-rule); }
-.wm-sanskrit {
-  font-family: var(--serif);
-  font-size: 0.82rem;
-  color: var(--text-faint);
-  letter-spacing: 0.08em;
-}
+.wm-sanskrit { font-family: var(--serif); font-size: 0.82rem; color: var(--text-faint); letter-spacing: 0.08em; }
 
-/* ─── Section eyebrow + title ─── */
 .section-eyebrow {
   font-family: var(--mono) !important;
   font-size: 0.6rem !important;
@@ -157,7 +142,6 @@ section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
   margin-bottom: 1.6rem !important;
 }
 
-/* ─── Nav sidebar labels ─── */
 .nav-label {
   font-family: var(--mono);
   font-size: 0.59rem;
@@ -168,27 +152,11 @@ section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
   margin-bottom: 0.5rem;
   display: block;
 }
-.sidebar-wordmark {
-  padding-bottom: 1.2rem;
-  border-bottom: 1px solid var(--gold-rule);
-  margin-bottom: 1.4rem;
-}
-.sb-title {
-  font-family: var(--serif);
-  font-size: 1.15rem;
-  color: var(--text-bright);
-  letter-spacing: 0.04em;
-}
+.sidebar-wordmark { padding-bottom: 1.2rem; border-bottom: 1px solid var(--gold-rule); margin-bottom: 1.4rem; }
+.sb-title { font-family: var(--serif); font-size: 1.15rem; color: var(--text-bright); letter-spacing: 0.04em; }
 .sb-title em { font-style: italic; color: var(--gold); }
-.sb-sub {
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  font-weight: 300;
-  color: var(--text-faint);
-  margin-top: 2px;
-}
+.sb-sub { font-family: var(--mono); font-size: 0.62rem; font-weight: 300; color: var(--text-faint); margin-top: 2px; }
 
-/* ─── Chat bubbles ─── */
 .msg-user {
   padding: 0.85rem 1rem;
   border-left: 1.5px solid var(--navy-border-hi);
@@ -207,52 +175,16 @@ section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
   line-height: 1.8;
   font-size: 1rem;
 }
-.msg-role-user {
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  font-weight: 300;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  margin-bottom: 5px;
-}
-.msg-role-ai {
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  font-weight: 300;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--gold-deep);
-  margin-bottom: 5px;
-}
-.msg-meta {
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  font-weight: 300;
-  color: var(--text-faint);
-  margin-top: 8px;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.src-tag {
-  font-family: var(--mono);
-  font-size: 0.63rem;
-  font-weight: 300;
-  color: #5AB87A;
-  border: 1px solid rgba(91,184,122,0.25);
-  padding: 1px 8px;
-  border-radius: 20px;
-  margin-right: 4px;
-}
+.msg-role-user { font-family: var(--mono); font-size: 0.6rem; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 5px; }
+.msg-role-ai   { font-family: var(--mono); font-size: 0.6rem; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold-deep); margin-bottom: 5px; }
+.msg-meta { font-family: var(--mono); font-size: 0.6rem; font-weight: 300; color: var(--text-faint); margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+.src-tag { font-family: var(--mono); font-size: 0.63rem; font-weight: 300; color: #5AB87A; border: 1px solid rgba(91,184,122,0.25); padding: 1px 8px; border-radius: 20px; margin-right: 4px; }
 
-/* ─── Status chips ─── */
 .chip { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-family:var(--mono); font-size:0.68rem; font-weight:300; }
 .chip-ok   { background:rgba(90,184,122,0.08); border:1px solid rgba(90,184,122,0.28); color:#5AB87A; }
 .chip-err  { background:rgba(191,107,107,0.08); border:1px solid rgba(191,107,107,0.28); color:#BF6B6B; }
 .chip-warn { background:rgba(201,168,76,0.08); border:1px solid var(--gold-rule); color:var(--gold); }
 
-/* ─── Doc preview ─── */
 .doc-preview {
   border: 1px solid var(--gold-rule-hi);
   border-radius: 5px;
@@ -267,72 +199,26 @@ section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
   overflow-y: auto;
 }
 
-/* ─── Reference table ─── */
 .ref-wrap { margin-bottom: 2rem; }
-.ref-head {
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  font-weight: 300;
-  color: var(--gold);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--gold-rule-hi);
-  padding-bottom: 0.4rem;
-  margin-bottom: 0.75rem;
-}
+.ref-head { font-family: var(--mono); font-size: 0.6rem; font-weight: 300; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 1px solid var(--gold-rule-hi); padding-bottom: 0.4rem; margin-bottom: 0.75rem; }
 .ref-table { width: 100%; border-collapse: collapse; }
 .ref-table tr { border-bottom: 1px solid var(--navy-border); }
 .ref-table tr:last-child { border-bottom: none; }
 .ref-table td { padding: 0.58rem 0.4rem; font-size: 0.9rem; vertical-align: top; }
-.ref-table td:first-child {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  font-weight: 300;
-  color: var(--gold);
-  width: 210px;
-  padding-right: 1.4rem;
-  white-space: nowrap;
-}
+.ref-table td:first-child { font-family: var(--mono); font-size: 0.7rem; font-weight: 300; color: var(--gold); width: 210px; padding-right: 1.4rem; white-space: nowrap; }
 .ref-table td:last-child { color: var(--text-mid); }
 
-/* ─── Metrics ─── */
-.metric-card {
-  background: var(--navy-surface);
-  border: 1px solid var(--gold-rule);
-  border-radius: 5px;
-  padding: 1rem 1.1rem;
-  text-align: center;
-}
+.metric-card { background: var(--navy-surface); border: 1px solid var(--gold-rule); border-radius: 5px; padding: 1rem 1.1rem; text-align: center; }
 .metric-val { font-family: var(--serif); font-size: 1.8rem; color: var(--gold); line-height: 1; margin-bottom: 4px; }
 .metric-lbl { font-family: var(--mono); font-size: 0.58rem; font-weight: 300; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
-.log-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 5px 0; border-bottom: 1px solid var(--navy-border);
-  font-family: var(--mono); font-size: 0.68rem; font-weight: 300;
-}
+.log-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--navy-border); font-family: var(--mono); font-size: 0.68rem; font-weight: 300; }
 .log-row:last-child { border-bottom: none; }
 .perf-bar { background: var(--navy-raised); border-radius: 3px; height: 3px; margin-top: 4px; overflow: hidden; }
 .perf-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold-deep), #5AB87A); }
 
-/* ─── Lawyer cards ─── */
-.lawyer-row {
-  display: grid;
-  grid-template-columns: 44px 1fr auto;
-  gap: 0.85rem 1rem;
-  padding: 1.2rem 0.5rem;
-  border-bottom: 1px solid var(--navy-border);
-  transition: background 0.12s, padding 0.12s;
-  border-radius: 4px;
-}
+.lawyer-row { display: grid; grid-template-columns: 44px 1fr auto; gap: 0.85rem 1rem; padding: 1.2rem 0.5rem; border-bottom: 1px solid var(--navy-border); transition: background 0.12s, padding 0.12s; border-radius: 4px; }
 .lawyer-row:hover { background: var(--gold-glow); padding-left: 0.8rem; }
-.l-avatar {
-  width: 42px; height: 42px;
-  border-radius: 50%;
-  background: var(--navy-raised);
-  border: 1px solid var(--gold-rule-hi);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--serif); font-size: 0.78rem; color: var(--gold);
-}
+.l-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--navy-raised); border: 1px solid var(--gold-rule-hi); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 0.78rem; color: var(--gold); }
 .l-name  { font-size: 0.95rem; font-weight: 500; color: var(--text-bright); display: block; }
 .l-role  { font-size: 0.8rem; color: var(--text-mid); font-style: italic; display: block; margin-bottom: 4px; }
 .l-tags  { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -341,17 +227,14 @@ section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
 .l-val   { font-family: var(--serif); font-size: 0.98rem; color: var(--gold); display: block; }
 .l-sub   { font-family: var(--mono); font-size: 0.58rem; font-weight: 300; color: var(--text-faint); display: block; }
 
-/* ─── Doc tile grid ─── */
 .doc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--gold-rule); border: 1px solid var(--gold-rule-hi); border-radius: 5px; overflow: hidden; margin-bottom: 1.8rem; }
 .doc-tile { background: var(--navy-surface); padding: 1.2rem 1.1rem; text-align: left; cursor: pointer; transition: background 0.12s; border: none; }
 .doc-tile:hover { background: var(--navy-raised); }
 .doc-tile-name { font-family: var(--serif); font-size: 0.93rem; color: var(--text-bright); display: block; margin-bottom: 3px; }
 .doc-tile-desc { font-size: 0.74rem; color: var(--text-faint); font-style: italic; line-height: 1.4; }
 
-/* ─── Divider ─── */
 .divider { border: none; border-top: 1px solid var(--gold-rule); margin: 1.2rem 0; }
 
-/* ─── Inputs ─── */
 .stTextInput input, .stTextArea textarea, .stSelectbox select {
   background: var(--navy-surface) !important;
   color: var(--text-bright) !important;
@@ -363,114 +246,47 @@ section[data-testid="stSidebar"] > div { padding: 1.8rem 1.4rem !important; }
   outline: none !important;
   box-shadow: none !important;
 }
-.stTextInput input:focus, .stTextArea textarea:focus {
-  border-bottom-color: var(--gold) !important;
-  box-shadow: none !important;
-}
-.stTextInput input::placeholder, .stTextArea textarea::placeholder {
-  color: var(--text-faint) !important;
-  font-style: italic !important;
-}
-label[data-testid="stWidgetLabel"] p {
-  font-family: var(--mono) !important;
-  font-size: 0.6rem !important;
-  font-weight: 300 !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
-  color: var(--gold-deep) !important;
-}
+.stTextInput input:focus, .stTextArea textarea:focus { border-bottom-color: var(--gold) !important; box-shadow: none !important; }
+.stTextInput input::placeholder, .stTextArea textarea::placeholder { color: var(--text-faint) !important; font-style: italic !important; }
+label[data-testid="stWidgetLabel"] p { font-family: var(--mono) !important; font-size: 0.6rem !important; font-weight: 300 !important; letter-spacing: 0.14em !important; text-transform: uppercase !important; color: var(--gold-deep) !important; }
 
-/* ─── Buttons ─── */
-.stButton > button {
-  font-family: var(--mono) !important;
-  font-size: 0.68rem !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.1em !important;
-  text-transform: uppercase !important;
-  color: var(--navy) !important;
-  background: var(--gold) !important;
-  border: none !important;
-  border-radius: 2px !important;
-  padding: 0.5rem 1.4rem !important;
-  transition: background 0.15s !important;
-}
+.stButton > button { font-family: var(--mono) !important; font-size: 0.68rem !important; font-weight: 400 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: var(--navy) !important; background: var(--gold) !important; border: none !important; border-radius: 2px !important; padding: 0.5rem 1.4rem !important; transition: background 0.15s !important; }
 .stButton > button:hover { background: var(--gold-bright) !important; }
-.stDownloadButton > button {
-  background: transparent !important;
-  color: var(--text-mid) !important;
-  border: 1px solid var(--navy-border-hi) !important;
-  font-family: var(--mono) !important;
-  font-size: 0.66rem !important;
-  font-weight: 300 !important;
-}
+.stDownloadButton > button { background: transparent !important; color: var(--text-mid) !important; border: 1px solid var(--navy-border-hi) !important; font-family: var(--mono) !important; font-size: 0.66rem !important; font-weight: 300 !important; }
 .stDownloadButton > button:hover { color: var(--gold) !important; border-color: var(--gold-rule-hi) !important; }
 
-/* ─── Tabs ─── */
-.stTabs [data-baseweb="tab-list"] {
-  background: var(--navy-mid) !important;
-  border-bottom: 1px solid var(--gold-rule) !important;
-  gap: 0 !important;
-}
-.stTabs [data-baseweb="tab"] {
-  font-family: var(--mono) !important;
-  font-size: 0.67rem !important;
-  font-weight: 300 !important;
-  letter-spacing: 0.1em !important;
-  text-transform: uppercase !important;
-  color: var(--text-faint) !important;
-  padding: 0.7rem 1.3rem !important;
-  background: transparent !important;
-}
-.stTabs [aria-selected="true"] {
-  color: var(--gold) !important;
-  border-bottom: 2px solid var(--gold) !important;
-  background: transparent !important;
-}
+.stTabs [data-baseweb="tab-list"] { background: var(--navy-mid) !important; border-bottom: 1px solid var(--gold-rule) !important; gap: 0 !important; }
+.stTabs [data-baseweb="tab"] { font-family: var(--mono) !important; font-size: 0.67rem !important; font-weight: 300 !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; color: var(--text-faint) !important; padding: 0.7rem 1.3rem !important; background: transparent !important; }
+.stTabs [aria-selected="true"] { color: var(--gold) !important; border-bottom: 2px solid var(--gold) !important; background: transparent !important; }
 .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
 
-/* ─── Selectbox ─── */
-div[data-baseweb="select"] > div {
-  background: var(--navy-surface) !important;
-  border: 1px solid var(--navy-border-hi) !important;
-  border-radius: 3px !important;
-  font-family: var(--mono) !important;
-  font-size: 0.67rem !important;
-  font-weight: 300 !important;
-  color: var(--text-mid) !important;
-}
+div[data-baseweb="select"] > div { background: var(--navy-surface) !important; border: 1px solid var(--navy-border-hi) !important; border-radius: 3px !important; font-family: var(--mono) !important; font-size: 0.67rem !important; font-weight: 300 !important; color: var(--text-mid) !important; }
 div[data-baseweb="select"] > div:focus-within { border-color: var(--gold-rule-hi) !important; }
 
-/* ─── Expander ─── */
 details { background: var(--navy-surface) !important; border: 1px solid var(--navy-border) !important; border-radius: 4px !important; margin-bottom: 8px !important; }
 details summary { font-family: var(--mono) !important; font-size: 0.67rem !important; font-weight: 300 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--gold) !important; padding: 0.7rem 1rem !important; }
 .streamlit-expanderHeader { color: var(--gold) !important; font-family: var(--mono) !important; font-size: 0.67rem !important; }
 .streamlit-expanderHeader:hover { color: var(--gold-bright) !important; }
 
-/* ─── Slider ─── */
 .stSlider [data-baseweb="slider"] { padding: 0 !important; }
 .stSlider [data-baseweb="thumb"] { background: var(--gold) !important; }
 .stSlider [data-baseweb="track-fill"] { background: var(--gold) !important; }
 
-/* ─── Radio ─── */
 .stRadio label { font-family: var(--mono) !important; font-size: 0.67rem !important; font-weight: 300 !important; color: var(--text-mid) !important; }
 
-/* ─── Alerts ─── */
 .stAlert { background: var(--navy-surface) !important; border: 1px solid var(--navy-border-hi) !important; border-radius: 4px !important; }
 div[data-testid="stNotification"] { background: var(--navy-surface) !important; }
 
-/* ─── Scrollbar ─── */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--navy-raised); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold-deep); }
 
-/* ─── Empty state ─── */
 .empty-state { text-align: center; padding: 3.5rem 0 2.5rem; }
 .empty-glyph { font-size: 2.2rem; color: var(--navy-raised); }
 .empty-title { font-family: var(--serif); font-size: 1.25rem; color: var(--text-bright); margin: 0.6rem 0 0.4rem; }
 .empty-sub { font-size: 0.9rem; color: var(--text-mid); max-width: 400px; margin: 0 auto; line-height: 1.6; }
 
-/* ─── Info note ─── */
 .info-note { font-family: var(--mono); font-size: 0.7rem; font-weight: 300; color: var(--text-faint); font-style: italic; text-align: center; padding: 0.8rem 0; }
 </style>
 """, unsafe_allow_html=True)
@@ -677,7 +493,6 @@ def estimate_tokens(text):
     return max(1, len(text) // 4)
 
 def get_api_key():
-    """Read GROQ_API_KEY from Streamlit secrets (Streamlit Cloud)."""
     try:
         return st.secrets["GROQ_API_KEY"].strip()
     except Exception:
@@ -715,7 +530,14 @@ def load_embeddings():
         encode_kwargs={"batch_size": 32, "normalize_embeddings": True},
     )
 
+# ── FIX: guard against missing langchain-groq package ──
 def load_llm(model_id):
+    if not GROQ_AVAILABLE:
+        st.error(
+            "**langchain-groq is not installed.**  \n"
+            "Add `langchain-groq` to your `requirements.txt` and redeploy the app."
+        )
+        return None
     api_key = get_api_key()
     if not api_key:
         st.error(
@@ -846,8 +668,10 @@ api_key = get_api_key()
 
 key_chip = (
     '<span class="chip chip-ok">● Groq ready</span>'
-    if api_key else
+    if (api_key and GROQ_AVAILABLE) else
     '<span class="chip chip-err">● GROQ_API_KEY missing — add to Streamlit Secrets</span>'
+    if api_key else
+    '<span class="chip chip-err">● langchain-groq not installed</span>'
 )
 
 st.markdown(f"""
@@ -916,13 +740,12 @@ with st.sidebar:
     m       = st.session_state.metrics
     avg_ms  = avg(m["llm_times"])
     lat_clr = "#5AB87A" if avg_ms < 3000 else "#C9A84C" if avg_ms < 8000 else "#BF6B6B"
-    kb_dot  = "dot-ok" if kb_ok else "dot-off"
     kb_lbl  = "KB Ready" if kb_ok else "No KB loaded"
 
     st.markdown(f"""
     <div style="display:flex;flex-direction:column;gap:6px">
-      <div class="status-row" style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:0.63rem;font-weight:300;color:var(--text-faint)">
-        <span class="dot {'dot-ok' if kb_ok else 'dot-off'}" style="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:{'#5AB87A' if kb_ok else 'var(--text-faint)'}"></span>
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:0.63rem;font-weight:300;color:var(--text-faint)">
+        <span style="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:{'#5AB87A' if kb_ok else 'var(--text-faint)'}"></span>
         {kb_lbl}
       </div>
       <div style="font-family:var(--mono);font-size:0.63rem;font-weight:300;color:var(--text-faint)">
@@ -1019,9 +842,9 @@ with tab_chat:
     if ask and question.strip():
         st.session_state.chat_history.append({"role": "user", "content": question.strip()})
 
-        sources        = []
-        retrieval_ms   = 0
-        context        = "No document context loaded. Answer from general Indian legal knowledge."
+        sources      = []
+        retrieval_ms = 0
+        context      = "No document context loaded. Answer from general Indian legal knowledge."
 
         if st.session_state.vectorstore:
             with st.spinner("Searching legal documents…"):
@@ -1041,9 +864,9 @@ with tab_chat:
             st.session_state.chat_history.pop()
             st.stop()
 
-        resp_area  = st.empty()
-        full_resp  = ""
-        t_llm      = time.time()
+        resp_area = st.empty()
+        full_resp = ""
+        t_llm     = time.time()
 
         with st.spinner("Consulting…"):
             for chunk in llm.stream(prompt):
@@ -1071,7 +894,6 @@ with tab_docs:
     st.markdown('<h1 class="section-title">Draft a legal document</h1>', unsafe_allow_html=True)
 
     if not st.session_state.selected_doc:
-        # ── Tile grid via HTML ──
         tiles_html = '<div class="doc-grid">'
         for doc_type, meta in DOCUMENT_TEMPLATES.items():
             tiles_html += (
@@ -1083,7 +905,6 @@ with tab_docs:
         tiles_html += '</div>'
         st.markdown(tiles_html, unsafe_allow_html=True)
 
-        # Actual selectable buttons below in columns
         cols = st.columns(3)
         for i, (doc_type, meta) in enumerate(DOCUMENT_TEMPLATES.items()):
             with cols[i % 3]:
@@ -1134,7 +955,7 @@ with tab_docs:
                     st.error("Please fill in at least a few fields first.")
                 else:
                     with st.spinner(f"Drafting {doc_type}…"):
-                        llm    = load_llm(model_id)
+                        llm = load_llm(model_id)
                         if llm is None:
                             st.stop()
                         t_doc  = time.time()
