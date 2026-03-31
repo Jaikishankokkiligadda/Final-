@@ -1,5 +1,5 @@
 streamlit
-langchain-groq
+langchain-groq==0.2.4
 langchain-huggingface
 langchain-community
 langchain-text-splitters
