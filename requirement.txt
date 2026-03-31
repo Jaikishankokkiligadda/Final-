@@ -1,11 +1,10 @@
-streamlit>=1.32.0
-pypdf
+streamlit
+langchain-groq
+langchain-huggingface
+langchain-community
 langchain-text-splitters
 langchain-core
-langchain-community
-langchain-huggingface
-langchain-groq
 faiss-cpu
 sentence-transformers
+pypdf
 python-docx
-ChatGroq
