@@ -9,3 +9,4 @@ faiss-cpu
 sentence-transformers
 python-docx
 langchain-groq
+ChatGroq
