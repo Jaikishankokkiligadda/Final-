@@ -665,13 +665,12 @@ def create_docx(title, content):
 # WORDMARK BANNER
 # ══════════════════════════════════════════════
 api_key = get_api_key()
-
 key_chip = (
     '<span class="chip chip-ok">● Groq ready</span>'
     if (api_key and GROQ_AVAILABLE) else
+    '<span class="chip chip-err">● langchain-groq not installed — add to requirements.txt</span>'
+    if not GROQ_AVAILABLE else
     '<span class="chip chip-err">● GROQ_API_KEY missing — add to Streamlit Secrets</span>'
-    if api_key else
-    '<span class="chip chip-err">● langchain-groq not installed</span>'
 )
 
 st.markdown(f"""
